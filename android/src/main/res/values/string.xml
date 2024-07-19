@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name">BackCounter</string>
+  <string name="notification_title">Step counting</string>
+  <string name="notification_text">Step counting works automatically</string>
+  <string name="notification_channel_id">sp_walk</string>
+</resources>
