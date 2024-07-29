@@ -5,12 +5,10 @@ capacitor plugin for counting step works in background.
 
 ## Platform caution
 
-This capacitor plugin is only for android project.
+This plugin works differently on Android and iPhone devices.
 
-## IOS
+Android devices bring information from the native sensor directly and store it in SQLight DB, but ios devices bring information from the 'Health' app and work.
 
-I recommend [cordova health plugin](https://github.com/dariosalvi78/cordova-plugin-health). 
-But cordova health plugin is not recommended on android device. Because it needs installing Google Fit App.
 
 ## Install
 
@@ -20,7 +18,41 @@ ionic cap sync
 ionic cap build android
 ```
 
-## Modify main AndroidManifest.xml in Android studio
+## IOS - Health app authoriztion & add framework & use permissions
+
+```
+Go to the Apple Developer site and register your app.
+Ensure you enable the HealthKit capability for your app. This is crucial as the capacitor-background-step plugin relies on HealthKit to access step count data.
+```
+
+```
+Open your project in Xcode.
+Navigate to your app target's settings.
+Go to the "Signing & Capabilities" tab.
+Click the "+" button to add a new capability.
+Select "HealthKit" from the list. This will configure your app to request access to HealthKit data.
+```
+
+```
+Still in Xcode, navigate to your app target's settings.
+Go to the "Build Phases" tab.
+Expand the "Link Binary With Libraries" section.
+Click the "+" button and search for HealthKit.framework.
+Add HealthKit.framework to ensure your app can use HealthKit's APIs.
+```
+
+```
+Open the Info.plist file in your project.
+Add the following keys and values to request the necessary permissions for accessing and updating health data:
+
+<key>NSHealthShareUsageDescription</key>
+<string>Access to health data is needed to track step count.</string>
+<key>NSHealthUpdateUsageDescription</key>
+<string>Access to health data is needed to update step count.</string>
+```
+
+
+## Android - Modify main AndroidManifest.xml in Android studio
 
 ```
 		<!-- Add service & receiver tags in application tag -->
