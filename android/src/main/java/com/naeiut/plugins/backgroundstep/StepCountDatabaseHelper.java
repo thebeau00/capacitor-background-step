@@ -6,8 +6,11 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import org.threeten.bp.LocalDateTime;
-import org.threeten.bp.ZoneId;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
+//import org.threeten.bp.LocalDateTime;
+//import org.threeten.bp.ZoneId;
 
 public class StepCountDatabaseHelper extends SQLiteOpenHelper {
 
