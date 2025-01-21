@@ -85,9 +85,18 @@ import HealthKit
 	
 	@objc public func checkAndRequestPermission(completionHandler: @escaping (Bool) -> Void) {
 		let readTypes = Set([HKObjectType.quantityType(forIdentifier: .stepCount)!])
+
 		healthStore.requestAuthorization(toShare: nil, read: readTypes) { (success, error) in
 			DispatchQueue.main.async {
-					completionHandler(success)
+				if success {
+					// 사용자가 Step Count에 대한 권한을 허용했는지 확인
+					let status = self.healthStore.authorizationStatus(for: HKObjectType.quantityType(forIdentifier: .stepCount)!)
+					let isGranted = (status == .sharingAuthorized)
+					completionHandler(isGranted)
+				} else {
+					// 권한 요청 자체가 실패한 경우
+					completionHandler(false)
+				}
 			}
 		}
 	}
