@@ -62,27 +62,33 @@ import HealthKit
 	}
 	
 	@objc public func getStepData(startDate: Date, endDate: Date, completionHandler: @escaping (NSNumber?, String?) -> Void) {
-
+		
 		let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
-		let predicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
-                
-		// Avoid manually logged data if applicable
-		let predicateAvoidManuallyLoggedData = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeyWasUserEntered, operatorType: .notEqualTo, value: true)
-		let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [predicate, predicateAvoidManuallyLoggedData])
-        
+		let datePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
+
+		// ✅ 수동 입력(Written by user)만 제외, 나머지는 포함
+		let manuallyEnteredPredicate = HKQuery.predicateForObjects(
+			withMetadataKey: HKMetadataKeyWasUserEntered,
+			operatorType: .equalTo,
+			value: true
+		)
+		let notManuallyEnteredOrUnknownPredicate = NSCompoundPredicate(notPredicateWithSubpredicate: manuallyEnteredPredicate)
+		
+		let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [datePredicate, notManuallyEnteredOrUnknownPredicate])
+
 		let query = HKStatisticsQuery(quantityType: stepType, quantitySamplePredicate: compoundPredicate, options: .cumulativeSum) { query, statistics, error in
 			var stepCount: Double = 0
 			if let quantity = statistics?.sumQuantity() {
-                stepCount = quantity.doubleValue(for: HKUnit.count())
+					stepCount = quantity.doubleValue(for: HKUnit.count())
 			}
 			DispatchQueue.main.async {
-                completionHandler(NSNumber(value: stepCount), nil)
+					completionHandler(NSNumber(value: stepCount), nil)
 			}
 		}
 		
 		healthStore.execute(query)
 	}
-	
+		
 	@objc public func checkAndRequestPermission(completionHandler: @escaping (Bool) -> Void) {
 		let readTypes = Set([HKObjectType.quantityType(forIdentifier: .stepCount)!])
 
