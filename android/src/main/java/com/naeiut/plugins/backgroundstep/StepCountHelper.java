@@ -29,9 +29,15 @@ public class StepCountHelper implements SensorEventListener {
 
   }
 
+  private long lastSavedSteps = -1;
+
   @Override
   public void onSensorChanged(SensorEvent sensorEvent) {
-    save((long) sensorEvent.values[0]);
+    long currentSteps = (long) sensorEvent.values[0];
+    if (currentSteps != lastSavedSteps) {
+      save(currentSteps);
+      lastSavedSteps = currentSteps;
+    }
   }
 
   @Override
@@ -39,12 +45,16 @@ public class StepCountHelper implements SensorEventListener {
   }
 
   public void start() {
-//    Toast.makeText(this.context, "Service on create", Toast.LENGTH_SHORT).show();
-    this.sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_GAME);
+    // ✅ 센서 리스너 등록 (이게 없으면 onSensorChanged는 호출되지 않음)
+    if (sensorManager != null && sensor != null) {
+      sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
+    }
   }
 
   public void stop() {
-    this.sensorManager.unregisterListener(this, sensor);
+    if (sensorManager != null) {
+      sensorManager.unregisterListener(this);
+    }
   }
 
   public void save(long step) {

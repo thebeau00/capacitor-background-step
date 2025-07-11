@@ -30,7 +30,7 @@ public class Backgroundstep {
         if (StepCountBackgroundService.isServiceRunning) {
             StepCountBackgroundService stepCountBackgroundService = new StepCountBackgroundService();
             Intent serviceIntent = new Intent(context, StepCountBackgroundService.class);
-            StepCountBackgroundService.stopForegroundService(context, activity);
+            StepCountBackgroundService.stopForegroundService(context);
         }
     }
 

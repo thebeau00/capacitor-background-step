@@ -25,7 +25,7 @@ public class StepCountBackgroundService extends Service {
   private StepCountHelper stepCountHelper;
 
   public static boolean isServiceRunning;
-  private String CHANNEL_ID = String.valueOf(R.string.notification_channel_id);
+  private String CHANNEL_ID; // 🔄 변경: 초기화는 onCreate에서 수행
   private Context context;
 
   public StepCountBackgroundService() {
@@ -52,22 +52,37 @@ public class StepCountBackgroundService extends Service {
 //    .setColor(getResources().getColor(R.color.colorPrimary))
       .build();
 
+    // ✅ Foreground 시작을 Thread 시작 전에 먼저 수행해야 함
     startForeground(1, notification);
+
+    // ✅ stepCountHelper 실행 (센서 리스너 등록만)
+    if (stepCountHelper != null) {
+      stepCountHelper.start(); // ✨ 센서 리스너 등록
+    }
 
     return START_STICKY;
   }
 
-  public static void stopForegroundService(Context context, Activity activity) {
-    StepCountHelper stepCountHelper = new StepCountHelper(context);
-    stepCountHelper.stop();
-    StepCountBackgroundService service = new StepCountBackgroundService();
-    service.stopSelf();
-    isServiceRunning = false;
+//  public static void stopForegroundService(Context context, Activity activity) {
+//    StepCountHelper stepCountHelper = new StepCountHelper(context);
+//    stepCountHelper.stop();
+//    StepCountBackgroundService service = new StepCountBackgroundService();
+//    service.stopSelf();
+//    isServiceRunning = false;
+//  }
+  public static void stopForegroundService(Context context) {
+    Intent stopIntent = new Intent(context, StepCountBackgroundService.class);
+    context.stopService(stopIntent);
   }
 
   @Override
   public void onCreate() {
     super.onCreate();
+
+    this.context = this;
+
+    // 🔄 변경: 문자열 리소스에서 실제 값 가져오기
+    CHANNEL_ID = getString(R.string.notification_channel_id);
 
     AndroidThreeTen.init(this);
 
@@ -75,7 +90,7 @@ public class StepCountBackgroundService extends Service {
     if(permission == PackageManager.PERMISSION_GRANTED) {
 //    Toast.makeText(this, "Service on create2", Toast.LENGTH_SHORT).show();
       this.stepCountHelper = new StepCountHelper(getApplicationContext());
-      this.stepCountHelper.start();
+      // ❌ stepCountHelper.start()는 onStartCommand에서 호출
       createNotificationChannel();
       isServiceRunning = true;
     }
@@ -103,14 +118,21 @@ public class StepCountBackgroundService extends Service {
 
   @Override
   public void onDestroy() {
-
     isServiceRunning = false;
     stopForeground(true);
 
-    Intent restartService = new Intent(this.context,RestartService.class);
+    // ✅ 센서 리스너 해제
+    if (stepCountHelper != null) {
+      stepCountHelper.stop();
+      stepCountHelper.close(); // ✅ DB 자원 해제
+    }
+
+    // ✅ 필요한 경우 서비스 재시작
+    Intent restartService = new Intent(this.context, RestartService.class);
     sendBroadcast(restartService);
 
     super.onDestroy();
   }
+
 
 }
