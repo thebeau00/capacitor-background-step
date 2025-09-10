@@ -46,7 +46,7 @@ import HealthKit
         
 		// Avoid manually logged data if applicable
 		let predicateAvoidManuallyLoggedData = HKQuery.predicateForObjects(withMetadataKey: HKMetadataKeyWasUserEntered, operatorType: .notEqualTo, value: true)
-		let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [predicate, predicateAvoidManuallyLoggedData])
+		let compoundPredicate: NSCompoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [predicate, predicateAvoidManuallyLoggedData])
         
 		let query = HKStatisticsQuery(quantityType: stepType, quantitySamplePredicate: compoundPredicate, options: .cumulativeSum) { query, statistics, error in
 			var stepCount: Double = 0
@@ -66,15 +66,17 @@ import HealthKit
 		let stepType = HKQuantityType.quantityType(forIdentifier: .stepCount)!
 		let datePredicate = HKQuery.predicateForSamples(withStart: startDate, end: endDate, options: .strictStartDate)
 
-		// ✅ 수동 입력(Written by user)만 제외, 나머지는 포함
-		let manuallyEnteredPredicate = HKQuery.predicateForObjects(
-			withMetadataKey: HKMetadataKeyWasUserEntered,
-			operatorType: .equalTo,
-			value: true
-		)
-		let notManuallyEnteredOrUnknownPredicate = NSCompoundPredicate(notPredicateWithSubpredicate: manuallyEnteredPredicate)
-		
-		let compoundPredicate = NSCompoundPredicate(andPredicateWithSubpredicates: [datePredicate, notManuallyEnteredOrUnknownPredicate])
+      // ✅ 수동 입력 데이터 제외
+      // "UserEntered = true" 인 것만 제외 → 메타데이터가 없거나 false 인 경우는 포함
+      let notUserEnteredPredicate = HKQuery.predicateForObjects(
+          withMetadataKey: HKMetadataKeyWasUserEntered,
+          operatorType: .notEqualTo,
+          value: true
+      )
+      
+      let compoundPredicate = NSCompoundPredicate(
+          andPredicateWithSubpredicates: [datePredicate, notUserEnteredPredicate]
+      )
 
 		let query = HKStatisticsQuery(quantityType: stepType, quantitySamplePredicate: compoundPredicate, options: .cumulativeSum) { query, statistics, error in
 			var stepCount: Double = 0
